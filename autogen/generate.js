@@ -334,7 +334,7 @@ function readProto(index, protoname) {
   return x_parser;
 }
 
-var makeindex = require('./makeindex');
+var indexer = require('./indexer');
 
 program
   .command('repl')
@@ -381,7 +381,7 @@ program
 
 
     _repl.context.loadIndex = function () {
-      makeindex.index('./proto/', function (index) {
+      indexer.index('./proto/', function (index) {
         _repl.addStatus('i');
         _repl.context.index = index;
         _repl.displayPrompt();
@@ -408,7 +408,7 @@ program
   .option('-o, --output <filename>', 'Output to filename', path.normalize)
   .action(function (part, options) {
     part = part || 'xproto';
-    makeindex.index('./proto/', function (index) {
+    indexer.index('./proto/', function (index) {
       var x_proto = readProto(index, part);
       x_proto.on('close_xcb', function () {
         if (!options.output || options.output == '-' )
