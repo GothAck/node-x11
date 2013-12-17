@@ -7,6 +7,7 @@ var fs = require('fs')
   , sax = require('sax')
   , program = require('commander')
   , XParser = require('./xparser')
+  , indexer = require('./indexer')
   , oe = process.exit;
 
 program
@@ -37,8 +38,6 @@ function readProto(index, protoname) {
   return x_parser;
 }
 
-var indexer = require('./indexer');
-
 program
   .command('repl')
   .description('Start with REPL')
@@ -46,6 +45,7 @@ program
     var prompt = program.colour ? ('x_proto'.yellow.italic + ' (#) ' + '> '.cyan.bold) : 'x_proto (#) > '
       , status = ''
       , current = '';
+
     if (program.colour)
       ((function () {
         var _write = process.stdout.write;
@@ -67,9 +67,9 @@ program
           return _write.call(this, data);
         };
       })());
+
     var _repl = repl.start(current = prompt.replace('#', status));
-    // Object.defineProperty(_repl.rli, '_promptLength', { value: 14 });
-    // console.log(_repl.rli)
+
     _repl.addStatus = function (s) {
       if (! ~ status.indexOf(s))
         status += s;
@@ -81,7 +81,6 @@ program
     }
     _repl.context._repl = _repl;
     _repl.context.proto = {};
-
 
     _repl.context.loadIndex = function () {
       indexer.index('./proto/', function (index) {
