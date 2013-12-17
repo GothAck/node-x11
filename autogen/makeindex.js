@@ -1,17 +1,13 @@
-var sax = require('sax');
-var fs = require('fs');
-var xml2js = require('xml2js')
-var assert = require('assert');
-
-var count = 0;
+var sax = require('sax')
+  , fs = require('fs')
+  , tsort = require('tsort')
+  , count = 0;
 
 function addToIndex(dir, index, callback, name) {
-
   count++;
-  var header;
-
-  var parser = sax.createStream(true);
-  var stream = fs.createReadStream(dir + '/' + name).pipe(parser);
+  var header
+    , parser = sax.createStream(true)
+    , stream = fs.createReadStream(dir + '/' + name).pipe(parser);
   parser.on('end', function() {
      count--;
      if (count == 0)
@@ -36,7 +32,6 @@ function addToIndex(dir, index, callback, name) {
        }
     }
   );
-
   parser.on('text', 
     function(text) { 
        parser.lastText = text;
@@ -44,17 +39,34 @@ function addToIndex(dir, index, callback, name) {
   );
 }
 
-
 function grep(re, str)
 {
    return str.match(re);
 }
 
-function makeIndex(dir, callback) {
+function index (dir, callback) {
   var index = {};
   fs.readdirSync(dir)
     .filter(grep.bind(null, /xml$/))
     .forEach(addToIndex.bind(null, dir, index, callback));
 }
+module.exports.index = index;
 
-module.exports = makeIndex;
+function sorted (callback) {
+  var graph = tsort();
+  index('./proto/', function(index) {
+    Object.keys(index).forEach(function (name) {
+      var idx = index[name];
+      idx.depends.forEach(function (dep) {
+        console.log(idx.header, dep)
+        graph.add(idx.header, dep);
+      });
+    });
+    callback(
+      graph.sort().reverse().map(function (header) {
+        return index[header];
+      })
+    )
+  });
+}
+module.exports.sorted = sorted;
